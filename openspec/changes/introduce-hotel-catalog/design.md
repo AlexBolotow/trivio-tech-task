@@ -70,14 +70,15 @@ Accept: application/json
 HTTP request
   -> ListHotelsRequest
   -> ListHotelsController
-  -> ListHotelsQueryService
-  -> Laravel Query Builder queries (hotels, room types, photos)
-  -> immutable paginated read models
+  -> ListHotelsQueryHandler
+  -> ListHotelsQueryService port
+  -> QueryBuilderListHotelsQueryService adapter
+  -> immutable HotelReadPage / HotelReadModel projection
   -> HotelCatalogResource
   -> JSON response
 ```
 
-Контроллер выполняет только HTTP mapping. `ListHotelsQueryService` владеет запросом, фильтрацией и eager loading. API Resource/read DTO владеет публичной формой ответа.
+Контроллер выполняет только HTTP mapping. `ListHotelsQueryHandler` представляет прикладной use case; `ListHotelsQueryService` в Application объявляет порт чтения, а адаптер в Infrastructure владеет SQL, фильтрацией и сборкой read projection. API Resource владеет публичной JSON-формой.
 
 ## Module layout
 
@@ -85,12 +86,14 @@ HTTP request
 
 ```text
 app/Modules/Catalog/
-├── Application/Queries/ListHotels/
-├── Infrastructure/Persistence/Eloquent/
+├── Application/Queries/ListHotels/  # Query, Handler, port, immutable read models
+├── Infrastructure/Persistence/Eloquent/  # write-side persistence models
+├── Infrastructure/Persistence/QueryBuilder/  # read-side SQL adapter
+├── CatalogServiceProvider.php
 └── UI/Http/
 ```
 
-Маршрут модуля регистрируется через `CatalogServiceProvider`, подключённый в `bootstrap/providers.php`. Query service является concrete-классом и разрешается Laravel-контейнером автоматически; явный binding пока не нужен.
+`CatalogServiceProvider` регистрирует binding между Application-портом и Query Builder адаптером и подключается в `bootstrap/providers.php`. HTTP-маршруты этого среза также будут зарегистрированы через него.
 
 ## Persistence model
 
@@ -135,9 +138,9 @@ app/Modules/Catalog/
 
 ## Read model and repository decision
 
-Каталог data-oriented и обслуживает read use case. `ListHotelsQueryService` использует Laravel Query Builder через database connection, не загружает Eloquent-модели, и возвращает отдельные immutable read models. Это оставляет use case чтения без методов persistence вроде `save()` и ограничивает результат необходимыми колонками.
+Каталог data-oriented и обслуживает read use case. Application объявляет `ListHotelsQueryService` port, а Infrastructure реализация использует Laravel Query Builder через database connection. Она не загружает Eloquent-модели и возвращает отдельные immutable read models. Это оставляет use case чтения без методов persistence вроде `save()` и ограничивает результат необходимыми колонками.
 
-Eloquent-модели остаются persistence-моделями для записи и работы с отношениями там, где это нужно. Repository и богатый Domain aggregate для этого read use case не создаются. Read models не являются Eloquent-моделями и не сериализуются ORM автоматически.
+`ListHotelsQueryHandler` принимает Query и делегирует порту. Он не знает SQL или Laravel Query Builder. Eloquent-модели остаются persistence-моделями для записи и работы с отношениями там, где это нужно. Repository и богатый Domain aggregate для этого read use case не создаются. Read models не являются Eloquent-моделями и не сериализуются ORM автоматически.
 
 ## Query behavior and performance
 
@@ -145,7 +148,7 @@ Eloquent-модели остаются persistence-моделями для за�
 - Порядок отелей: `name`, затем `id`.
 - После получения страницы отелей типы номеров и фотографии загружаются двумя пакетными Query Builder запросами по списку родительских ID; N+1 не допускается.
 - Вложенные room types допустимы в первом срезе благодаря пределу `per_page <= 50`.
-- Сборка read models выполняется в памяти с группировкой дочерних строк по foreign key; каждый запрос выбирает только поля, нужные read contract.
+- Адаптер собирает read models в памяти с группировкой дочерних строк по foreign key; каждый запрос выбирает только поля, нужные read contract.
 - Транзакция для Query не открывается. При параллельном изменении каталога `total` и выбранная страница могут отражать разные моменты времени; для каталога это приемлемо, а строгий snapshot потребовал бы отдельного обоснования.
 - Elasticsearch не используется: MySQL достаточно для первого точного фильтра по городу и является источником истины.
 
@@ -160,7 +163,9 @@ Eloquent-модели остаются persistence-моделями для за�
 ## Testing
 
 - HTTP feature tests фиксируют JSON-контракт, фильтрацию, пагинацию и validation errors.
-- Database integration tests проверяют scopes/relations, ограничения уникальности и отсутствие неактивных записей.
+- Application test проверяет, что Query Handler делегирует запрос Application port и возвращает его read result.
+- Infrastructure database integration tests проверяют SQL filtering, стабильный порядок, пакетное чтение связей и отсутствие неактивных записей.
+- Database integration tests также проверяют ограничения уникальности и отношения write-side Eloquent-моделей.
 - Factories создают независимые тестовые данные.
 - Локальный seeder предоставляет небольшой демонстрационный каталог и не используется как источник production-данных.
 

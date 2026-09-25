@@ -4,8 +4,10 @@
 - [x] Добавить миграции `cities`, `hotels`, `room_types` и `room_type_photos` с индексами и constraints.
 - [x] Добавить Catalog Eloquent-модели и отношения без публичной ORM-сериализации.
 - [x] Добавить factories и небольшой локальный catalog seeder.
-- [x] Добавить `ListHotelsQueryService` на Query Builder с фильтрацией, стабильным порядком, пакетной загрузкой связей и immutable read models.
+- [x] Добавить Application Query, Query Handler и `ListHotelsQueryService` port с Infrastructure Query Builder адаптером и immutable read models.
 - [ ] Добавить Form Request, controller и API Resources/read DTO для `GET /api/v1/catalog/hotels`.
+- [x] Создать и зарегистрировать `CatalogServiceProvider`, привязав Query Service port к Query Builder адаптеру.
+- [ ] Добавить application test на делегирование Query Handler в port.
 - [ ] Зарегистрировать маршрут через `CatalogServiceProvider`.
 - [ ] Добавить HTTP feature tests для успешной выдачи, пустого результата, фильтрации, пагинации и validation errors.
 - [ ] Добавить database integration tests для отношений и ограничений схемы.
