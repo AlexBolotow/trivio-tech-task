@@ -1,5 +1,8 @@
 # Design: Bootstrap local development environment
 
+- Status: Approved
+- Approved: 2026-09-25
+
 ## Proposed layout
 
 Laravel lives at the repository root. Infrastructure-specific files live under `docker/`; `compose.yaml`, `.env.example`, `Makefile` and `README.md` remain at the root.
@@ -61,10 +64,11 @@ Add a minimal `/health` JSON route. It proves that Nginx can reach PHP-FPM and L
 
 ## Configuration boundaries
 
-- Root `.env`: Docker Compose ports, project identity and database container credentials; ignored by Git.
-- Root `.env.example`: safe documented defaults; committed.
-- Laravel `.env`: generated locally from Laravel's example and configured to use service name `mysql`; ignored by Git.
+- Root `.env`: one local file shared by Docker Compose and Laravel; it contains Compose ports/project identity and Laravel settings, uses service name `mysql`, and is ignored by Git.
+- Root `.env.example`: the complete set of safe documented defaults for both Compose and Laravel; committed.
 - Secrets are never committed.
+
+One shared file is intentional: both Laravel at the repository root and Docker Compose expect `.env` there. Splitting the files would require wrapper flags and duplicate database settings without providing useful isolation at this stage.
 
 ## Alternatives considered
 
