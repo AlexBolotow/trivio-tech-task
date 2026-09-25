@@ -1,0 +1,9 @@
+.git
+.idea
+.env
+.phpunit.cache
+.phpunit.result.cache
+node_modules
+public/build
+storage/logs/*
+vendor

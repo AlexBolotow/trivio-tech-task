@@ -1,58 +1,97 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Trivio Tech Task
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Учебная реализация модуля отельных услуг на Laravel по материалам system design Trivio.
 
-## About Laravel
+## Требования
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Docker Desktop с Docker Compose;
+- GNU Make;
+- Git.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Локальные PHP, Composer, MySQL и Nginx не требуются.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Первый запуск
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/AlexBolotow/trivio-tech-task.git
+cd trivio-tech-task
+cp .env.example .env
+make up
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+`make up`:
 
-## Contributing
+1. собирает development PHP-образ;
+2. запускает MySQL и PHP-FPM;
+3. устанавливает Composer-зависимости в bind-mounted `vendor/`;
+4. генерирует `APP_KEY`, если он отсутствует;
+5. выполняет миграции;
+6. запускает Nginx и ждёт healthcheck-ов.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+После запуска endpoint состояния доступен по адресу:
 
-## Code of Conduct
+```text
+http://localhost:8080/health
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Ожидаемый ответ:
 
-## Security Vulnerabilities
+```json
+{"service":"trivio-tech-task","status":"ok"}
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Если порт занят, измени `APP_HTTP_PORT` в локальном `.env`. Внешний порт MySQL задаётся через `DB_FORWARD_PORT`; внутри Docker-сети Laravel всегда использует `mysql:3306`.
 
-## License
+## Сервисы первого этапа
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Сервис | Назначение |
+|---|---|
+| `nginx` | Входящий HTTP и статические файлы |
+| `app` | PHP 8.4, PHP-FPM, Laravel, Composer и development Xdebug |
+| `mysql` | MySQL 8.4 с постоянным named volume |
+
+Redis, RabbitMQ и Elasticsearch намеренно будут добавлены только вместе со сценариями, которым они нужны.
+
+## Команды
+
+| Команда | Назначение |
+|---|---|
+| `make up` | Собрать и запустить окружение, дождаться healthcheck-ов |
+| `make down` | Остановить контейнеры, сохранив MySQL volume |
+| `make reset` | Удалить контейнеры и MySQL volume; данные будут потеряны |
+| `make ps` | Показать состояние сервисов |
+| `make logs` | Следить за логами всех сервисов |
+| `make logs SERVICE=nginx` | Следить за логами выбранного сервиса |
+| `make shell` | Открыть shell внутри app-контейнера |
+| `make artisan ARGS='about'` | Выполнить Artisan-команду |
+| `make composer ARGS='validate --strict'` | Выполнить Composer-команду |
+| `make migrate` | Выполнить миграции |
+| `make test` | Запустить PHPUnit suite |
+
+## Xdebug
+
+Xdebug установлен только в development target и по умолчанию выключен. Для включения измени в локальном `.env`:
+
+```dotenv
+XDEBUG_MODE=debug
+```
+
+Затем пересоздай app-контейнер:
+
+```bash
+docker compose up -d --force-recreate app nginx
+```
+
+Xdebug подключается к `host.docker.internal:9003`.
+
+## Конфигурация
+
+Один корневой `.env` используется Laravel и Docker Compose. Он создаётся из `.env.example`, содержит только локальные значения и не коммитится. Значения внутри `.env.example` предназначены только для development.
+
+Docker images зафиксированы конкретными версиями и multi-platform digest. UID/GID пользователя передаются из Makefile во время сборки, чтобы файлы `vendor/`, кеши и логи оставались редактируемыми на host.
+
+## Архитектура и процесс
+
+- Постоянные правила проекта: [`AGENTS.md`](AGENTS.md).
+- Архитектурные решения: [`docs/adr`](docs/adr).
+- Актуальные и предлагаемые спецификации: [`openspec`](openspec).
