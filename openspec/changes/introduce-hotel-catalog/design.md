@@ -68,17 +68,17 @@ Accept: application/json
 
 ```text
 HTTP request
-  -> ListHotelsRequest
-  -> ListHotelsController
-  -> ListHotelsQueryHandler
-  -> ListHotelsQueryService port
-  -> QueryBuilderListHotelsQueryService adapter
+  -> GetHotelsRequest
+  -> GetHotelsController
+  -> GetHotelsQueryHandler
+  -> GetHotelsQueryService port
+  -> QueryBuilderGetHotelsQueryService adapter
   -> immutable HotelReadPage / HotelReadModel projection
   -> HotelCatalogResource
   -> JSON response
 ```
 
-Контроллер выполняет только HTTP mapping. `ListHotelsQueryHandler` представляет прикладной use case; `ListHotelsQueryService` в Application объявляет порт чтения, а адаптер в Infrastructure владеет SQL, фильтрацией и сборкой read projection. API Resource владеет публичной JSON-формой.
+Контроллер выполняет только HTTP mapping. `GetHotelsQueryHandler` представляет прикладной use case; `GetHotelsQueryService` в Application объявляет порт чтения, а адаптер в Infrastructure владеет SQL, фильтрацией и сборкой read projection. API Resource владеет публичной JSON-формой.
 
 ## Module layout
 
@@ -86,7 +86,7 @@ HTTP request
 
 ```text
 app/Modules/Catalog/
-├── Application/Queries/ListHotels/  # Query, Handler, port, immutable read models
+├── Application/Queries/GetHotels/  # Query, Handler, port, immutable read models
 ├── Infrastructure/Persistence/Eloquent/  # write-side persistence models
 ├── Infrastructure/Persistence/QueryBuilder/  # read-side SQL adapter
 ├── CatalogServiceProvider.php
@@ -138,9 +138,9 @@ app/Modules/Catalog/
 
 ## Read model and repository decision
 
-Каталог data-oriented и обслуживает read use case. Application объявляет `ListHotelsQueryService` port, а Infrastructure реализация использует Laravel Query Builder через database connection. Она не загружает Eloquent-модели и возвращает отдельные immutable read models. Это оставляет use case чтения без методов persistence вроде `save()` и ограничивает результат необходимыми колонками.
+Каталог data-oriented и обслуживает read use case. Application объявляет `GetHotelsQueryService` port, а Infrastructure реализация использует Laravel Query Builder через database connection. Она не загружает Eloquent-модели и возвращает отдельные immutable read models. Это оставляет use case чтения без методов persistence вроде `save()` и ограничивает результат необходимыми колонками.
 
-`ListHotelsQueryHandler` принимает Query и делегирует порту. Он не знает SQL или Laravel Query Builder. Eloquent-модели остаются persistence-моделями для записи и работы с отношениями там, где это нужно. Repository и богатый Domain aggregate для этого read use case не создаются. Read models не являются Eloquent-моделями и не сериализуются ORM автоматически.
+`GetHotelsQueryHandler` принимает Query и делегирует порту. Он не знает SQL или Laravel Query Builder. Eloquent-модели остаются persistence-моделями для записи и работы с отношениями там, где это нужно. Repository и богатый Domain aggregate для этого read use case не создаются. Read models не являются Eloquent-моделями и не сериализуются ORM автоматически.
 
 ## Query behavior and performance
 

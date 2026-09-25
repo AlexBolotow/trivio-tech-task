@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Catalog\Application\Queries\ListHotels;
+namespace App\Modules\Catalog\Application\Queries\GetHotels;
 
 final readonly class HotelReadPage
 {

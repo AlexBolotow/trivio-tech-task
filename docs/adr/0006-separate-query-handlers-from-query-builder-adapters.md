@@ -11,7 +11,7 @@ The Catalog read use case uses Laravel Query Builder and immutable read models. 
 
 For the hotel-listing use case:
 
-- Keep `ListHotelsQuery`, `ListHotelsQueryHandler`, the `ListHotelsQueryService` port, and immutable read models in `Catalog/Application/Queries/ListHotels`.
+- Keep `GetHotelsQuery`, `GetHotelsQueryHandler`, the `GetHotelsQueryService` port, and immutable read models in `Catalog/Application/Queries/GetHotels`.
 - Put the Laravel Query Builder implementation in `Catalog/Infrastructure/Persistence/QueryBuilder`.
 - Let the handler delegate to the port; keep SQL, selection, pagination execution, relation batching, and row-to-read-model mapping in the adapter.
 - Bind the port to the adapter in `CatalogServiceProvider`.
