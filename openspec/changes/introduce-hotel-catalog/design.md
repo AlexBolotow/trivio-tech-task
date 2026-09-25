@@ -71,8 +71,8 @@ HTTP request
   -> ListHotelsRequest
   -> ListHotelsController
   -> ListHotelsQueryService
-  -> Eloquent query with constrained eager loading
-  -> paginated read DTOs
+  -> Laravel Query Builder queries (hotels, room types, photos)
+  -> immutable paginated read models
   -> HotelCatalogResource
   -> JSON response
 ```
@@ -133,18 +133,20 @@ app/Modules/Catalog/
 
 На этом этапе `status` ограничивается прикладными константами `active` и `inactive`. Database enum не используется, чтобы изменение набора статусов не требовало изменения типа колонки.
 
-## Eloquent and repository decision
+## Read model and repository decision
 
-Каталог data-oriented и обслуживает read use case. Query service использует Eloquent Builder напрямую и загружает только необходимые колонки и отношения. Repository и богатый Domain aggregate не создаются: здесь нет бизнесового перехода состояния, который они защищали бы.
+Каталог data-oriented и обслуживает read use case. `ListHotelsQueryService` использует Laravel Query Builder через database connection, не загружает Eloquent-модели, и возвращает отдельные immutable read models. Это оставляет use case чтения без методов persistence вроде `save()` и ограничивает результат необходимыми колонками.
 
-Eloquent-модели являются инфраструктурными persistence/read моделями и не сериализуются напрямую в HTTP.
+Eloquent-модели остаются persistence-моделями для записи и работы с отношениями там, где это нужно. Repository и богатый Domain aggregate для этого read use case не создаются. Read models не являются Eloquent-моделями и не сериализуются ORM автоматически.
 
 ## Query behavior and performance
 
 - Фильтрация по `city_id` и `active` выполняется в SQL.
 - Порядок отелей: `name`, затем `id`.
-- Room types загружаются одним constrained eager-load запросом, фотографии — ещё одним; N+1 не допускается.
+- После получения страницы отелей типы номеров и фотографии загружаются двумя пакетными Query Builder запросами по списку родительских ID; N+1 не допускается.
 - Вложенные room types допустимы в первом срезе благодаря пределу `per_page <= 50`.
+- Сборка read models выполняется в памяти с группировкой дочерних строк по foreign key; каждый запрос выбирает только поля, нужные read contract.
+- Транзакция для Query не открывается. При параллельном изменении каталога `total` и выбранная страница могут отражать разные моменты времени; для каталога это приемлемо, а строгий snapshot потребовал бы отдельного обоснования.
 - Elasticsearch не используется: MySQL достаточно для первого точного фильтра по городу и является источником истины.
 
 ## Errors and edge cases
@@ -171,6 +173,10 @@ Eloquent-модели являются инфраструктурными persis
 ### Добавить Repository для каталога
 
 Отклонено: repository не защищает агрегат и только дублирует возможности Eloquent Builder для read query.
+
+### Читать каталог через Eloquent
+
+Отклонено для этого use case: Eloquent удобен для отношений, но read model задаёт более узкий контракт и не предоставляет операции изменения состояния. Query Builder сохраняет SQL-подобный способ чтения без ORM lifecycle; отдельный PDO adapter не нужен.
 
 ### Сразу добавить Elasticsearch
 
