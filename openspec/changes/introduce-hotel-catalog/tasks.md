@@ -1,7 +1,7 @@
 # Tasks: Introduce hotel catalog
 
 - [x] Получить approval поведения и компромиссов из `design.md`.
-- [ ] Добавить миграции `cities`, `hotels`, `room_types` и `room_type_photos` с индексами и constraints.
+- [x] Добавить миграции `cities`, `hotels`, `room_types` и `room_type_photos` с индексами и constraints.
 - [ ] Добавить Catalog Eloquent-модели и отношения без публичной ORM-сериализации.
 - [ ] Добавить factories и небольшой локальный catalog seeder.
 - [ ] Добавить `ListHotelsQueryService` с фильтрацией, стабильным порядком и constrained eager loading.
