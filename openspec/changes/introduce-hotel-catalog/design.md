@@ -1,7 +1,8 @@
 # Design: Introduce hotel catalog
 
-- Status: Proposed
+- Status: Approved
 - Created: 2026-09-25
+- Approved: 2026-09-25
 
 ## Business scenario and invariants
 
