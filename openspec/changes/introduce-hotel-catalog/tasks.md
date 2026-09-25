@@ -3,7 +3,7 @@
 - [x] Получить approval поведения и компромиссов из `design.md`.
 - [x] Добавить миграции `cities`, `hotels`, `room_types` и `room_type_photos` с индексами и constraints.
 - [x] Добавить Catalog Eloquent-модели и отношения без публичной ORM-сериализации.
-- [ ] Добавить factories и небольшой локальный catalog seeder.
+- [x] Добавить factories и небольшой локальный catalog seeder.
 - [ ] Добавить `ListHotelsQueryService` с фильтрацией, стабильным порядком и constrained eager loading.
 - [ ] Добавить Form Request, controller и API Resources/read DTO для `GET /api/v1/catalog/hotels`.
 - [ ] Зарегистрировать маршрут через `CatalogServiceProvider`.

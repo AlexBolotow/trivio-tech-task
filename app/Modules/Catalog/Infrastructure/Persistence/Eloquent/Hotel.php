@@ -2,14 +2,19 @@
 
 namespace App\Modules\Catalog\Infrastructure\Persistence\Eloquent;
 
+use Database\Factories\HotelFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[UseFactory(HotelFactory::class)]
 class Hotel extends Model
 {
+    use HasFactory;
     use HasUuids;
 
     public const STATUS_ACTIVE = 'active';

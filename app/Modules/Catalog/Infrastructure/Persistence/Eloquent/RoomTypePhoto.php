@@ -2,11 +2,19 @@
 
 namespace App\Modules\Catalog\Infrastructure\Persistence\Eloquent;
 
+use Database\Factories\RoomTypePhotoFactory;
+use Illuminate\Database\Eloquent\Attributes\UseFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+#[UseFactory(RoomTypePhotoFactory::class)]
 class RoomTypePhoto extends Model
 {
+    use HasFactory;
+    use HasUuids;
+
     protected $fillable = [
         'room_type_id',
         'url',
