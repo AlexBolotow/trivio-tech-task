@@ -86,7 +86,7 @@ final class SupplierImportPersistenceTest extends TestCase
             sourceLocator: ['xml_path' => '/catalog/hotel', 'batch' => 1],
             recordsCount: 250,
         ));
-        $chunk->startAttempt(new \DateTimeImmutable('2026-09-26T10:01:00Z'));
+        $chunk->start(new \DateTimeImmutable('2026-09-26T10:01:00Z'));
         $repository->save($chunk);
 
         $restored = $repository->find((int) $chunk->id);
@@ -94,7 +94,6 @@ final class SupplierImportPersistenceTest extends TestCase
         self::assertNotNull($restored);
         self::assertEquals(['xml_path' => '/catalog/hotel', 'batch' => 1], $restored->sourceLocator);
         self::assertSame(SupplierImportChunkStatus::InProgress, $restored->status());
-        self::assertSame(1, $restored->attempts());
     }
 
     public function test_it_prevents_duplicate_external_hotel_ids_for_the_same_supplier(): void

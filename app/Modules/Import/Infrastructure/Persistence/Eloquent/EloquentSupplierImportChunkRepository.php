@@ -53,10 +53,6 @@ class EloquentSupplierImportChunkRepository implements SupplierImportChunkReposi
             sourceLocator: $this->sourceLocator($record->getAttribute('source_locator')),
             recordsCount: $record->records_count,
             status: SupplierImportChunkStatus::from($record->getRawOriginal('status')),
-            attempts: $record->attempts,
-            lastHeartbeatAt: $this->toDateTimeImmutable($record->getAttribute('last_heartbeat_at')),
-            errorCode: $record->error_code,
-            errorMessage: $record->error_message,
             startedAt: $this->toDateTimeImmutable($record->getAttribute('started_at')),
             finishedAt: $this->toDateTimeImmutable($record->getAttribute('finished_at')),
         );
@@ -97,10 +93,6 @@ class EloquentSupplierImportChunkRepository implements SupplierImportChunkReposi
             'source_locator' => $supplierImportChunk->sourceLocator,
             'records_count' => $supplierImportChunk->recordsCount,
             'status' => $supplierImportChunk->status(),
-            'attempts' => $supplierImportChunk->attempts(),
-            'last_heartbeat_at' => $supplierImportChunk->lastHeartbeatAt(),
-            'error_code' => $supplierImportChunk->errorCode(),
-            'error_message' => $supplierImportChunk->errorMessage(),
             'started_at' => $supplierImportChunk->startedAt(),
             'finished_at' => $supplierImportChunk->finishedAt(),
         ]);

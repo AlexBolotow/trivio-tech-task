@@ -16,10 +16,6 @@ class SupplierImportChunkRecord extends Model
         'source_locator',
         'records_count',
         'status',
-        'attempts',
-        'last_heartbeat_at',
-        'error_code',
-        'error_message',
         'started_at',
         'finished_at',
     ];
@@ -30,8 +26,6 @@ class SupplierImportChunkRecord extends Model
             'source_locator' => 'array',
             'records_count' => 'integer',
             'status' => SupplierImportChunkStatus::class,
-            'attempts' => 'integer',
-            'last_heartbeat_at' => 'immutable_datetime',
             'started_at' => 'immutable_datetime',
             'finished_at' => 'immutable_datetime',
         ];
