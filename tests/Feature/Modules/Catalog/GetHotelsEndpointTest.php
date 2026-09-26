@@ -123,6 +123,7 @@ final class GetHotelsEndpointTest extends TestCase
         yield 'page size exceeds maximum' => [['city_id' => 1, 'per_page' => 51], 'per_page'];
     }
 
+    /** @param array<string, int> $parameters */
     #[DataProvider('invalidQueryParameters')]
     public function test_it_rejects_invalid_query_parameters(array $parameters, string $invalidField): void
     {

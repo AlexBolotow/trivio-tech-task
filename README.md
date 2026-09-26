@@ -67,8 +67,13 @@ Redis, RabbitMQ и Elasticsearch намеренно будут добавлен�
 | `make composer ARGS='validate --strict'` | Выполнить Composer-команду |
 | `make migrate` | Выполнить миграции |
 | `make test` | Запустить PHPUnit на отдельной MySQL-схеме `trivio_testing` |
+| `make cs-check` | Проверить стиль PHP по PSR-12 |
+| `make cs-fix` | Исправить стиль PHP по PSR-12 |
+| `make analyse` | Запустить PHPStan с Larastan, уровень 6 |
 
 Тесты подключаются к текущему MySQL-сервису `mysql`, но используют собственную схему `trivio_testing`. Локальная база приложения (`mysql-dev`) и основная схема `trivio` в тестах не используются. Тестовую схему можно очищать и пересоздавать без потери локальных данных разработки.
+
+GitHub Actions запускает Composer validation, проверку PSR-12, PHPStan и тесты на MySQL. Для локального запуска тех же проверок сначала подними окружение командой `make up`, затем выполни `make cs-check`, `make analyse` и `make test`.
 
 ## Демонстрационный каталог
 

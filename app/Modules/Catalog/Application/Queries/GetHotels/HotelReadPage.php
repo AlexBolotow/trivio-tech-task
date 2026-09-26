@@ -13,5 +13,6 @@ final readonly class HotelReadPage
         public int $perPage,
         public int $total,
         public int $lastPage,
-    ) {}
+    ) {
+    }
 }

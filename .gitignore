@@ -20,6 +20,7 @@ bootstrap/cache/*.php
 .phpactor.json
 .phpunit.cache/
 .phpunit.result.cache
+.php-cs-fixer.php
 .fleet/
 .nova/
 .vscode/

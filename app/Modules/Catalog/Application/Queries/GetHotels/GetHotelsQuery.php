@@ -8,5 +8,6 @@ final readonly class GetHotelsQuery
         public int $cityId,
         public int $page,
         public int $perPage,
-    ) {}
+    ) {
+    }
 }

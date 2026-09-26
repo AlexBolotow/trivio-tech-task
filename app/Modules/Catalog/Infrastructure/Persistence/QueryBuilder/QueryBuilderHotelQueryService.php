@@ -11,7 +11,9 @@ use Illuminate\Database\ConnectionInterface;
 
 final readonly class QueryBuilderHotelQueryService implements HotelQueryService
 {
-    public function __construct(private ConnectionInterface $database) {}
+    public function __construct(private ConnectionInterface $database)
+    {
+    }
 
     public function getHotels(GetHotelsQuery $query): HotelReadPage
     {

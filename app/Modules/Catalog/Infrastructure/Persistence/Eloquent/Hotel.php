@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[UseFactory(HotelFactory::class)]
 class Hotel extends Model
 {
+    /** @use HasFactory<HotelFactory> */
     use HasFactory;
     use HasUuids;
 
@@ -41,16 +42,19 @@ class Hotel extends Model
         ];
     }
 
+    /** @return BelongsTo<City, $this> */
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
     }
 
+    /** @return HasMany<RoomType, $this> */
     public function roomTypes(): HasMany
     {
         return $this->hasMany(RoomType::class);
     }
 
+    /** @param Builder<Hotel> $query */
     public function scopeActive(Builder $query): void
     {
         $query->where('status', self::STATUS_ACTIVE);

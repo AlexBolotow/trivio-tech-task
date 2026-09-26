@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[UseFactory(RoomTypePhotoFactory::class)]
 class RoomTypePhoto extends Model
 {
+    /** @use HasFactory<RoomTypePhotoFactory> */
     use HasFactory;
     use HasUuids;
 
@@ -28,6 +29,7 @@ class RoomTypePhoto extends Model
         ];
     }
 
+    /** @return BelongsTo<RoomType, $this> */
     public function roomType(): BelongsTo
     {
         return $this->belongsTo(RoomType::class);

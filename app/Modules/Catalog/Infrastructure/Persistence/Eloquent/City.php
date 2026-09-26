@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[UseFactory(CityFactory::class)]
 class City extends Model
 {
+    /** @use HasFactory<CityFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -18,6 +19,7 @@ class City extends Model
         'country_code',
     ];
 
+    /** @return HasMany<Hotel, $this> */
     public function hotels(): HasMany
     {
         return $this->hasMany(Hotel::class);

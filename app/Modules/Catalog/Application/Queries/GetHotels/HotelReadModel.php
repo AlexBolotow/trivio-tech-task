@@ -12,5 +12,6 @@ final readonly class HotelReadModel
         public string $name,
         public string $address,
         public array $roomTypes,
-    ) {}
+    ) {
+    }
 }

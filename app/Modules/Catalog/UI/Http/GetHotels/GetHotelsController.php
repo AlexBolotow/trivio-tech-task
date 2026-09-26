@@ -7,7 +7,9 @@ use App\Modules\Catalog\Application\Queries\GetHotels\GetHotelsQueryHandler;
 
 final readonly class GetHotelsController
 {
-    public function __construct(private GetHotelsQueryHandler $handler) {}
+    public function __construct(private GetHotelsQueryHandler $handler)
+    {
+    }
 
     public function __invoke(GetHotelsRequest $request): HotelCatalogResource
     {

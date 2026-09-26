@@ -15,5 +15,6 @@ final readonly class RoomTypeReadModel
         public ?int $maxChildren,
         public ?int $maxTotalGuests,
         public array $photos,
-    ) {}
+    ) {
+    }
 }

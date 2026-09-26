@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build and start the application stack
+        run: make up
+
+      - name: Validate Composer configuration
+        run: make composer ARGS='validate --strict'
+
+      - name: Check PSR-12 formatting
+        run: make cs-check
+
+      - name: Run PHPStan
+        run: make analyse
+
+      - name: Run test suite on MySQL
+        run: make test

@@ -11,7 +11,7 @@ export HOST_GID
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env build up composer-install app-key migrate down reset ps logs shell artisan composer test
+.PHONY: help env build up composer-install app-key migrate down reset ps logs shell artisan composer test-db test cs-check cs-fix analyse
 
 help: ## Показать доступные команды
 	@awk 'BEGIN {FS = ":.*##"}; /^[a-zA-Z_-]+:.*##/ {printf "  %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -64,5 +64,17 @@ artisan: ## Запустить Artisan, например: make artisan ARGS='abo
 composer: ## Запустить Composer, например: make composer ARGS='validate --strict'
 	$(COMPOSE) exec app composer $(ARGS)
 
-test: ## Запустить PHPUnit на отдельной MySQL-схеме trivio_testing внутри app-контейнера
+test-db: ## Создать изолированную MySQL-схему для тестов
+	$(COMPOSE) exec -T mysql sh -c 'MYSQL_PWD="$$MYSQL_ROOT_PASSWORD" mysql --user=root' < docker/mysql/create-test-database.sql
+
+test: test-db ## Запустить PHPUnit на отдельной MySQL-схеме trivio_testing внутри app-контейнера
 	$(COMPOSE) exec -T app php artisan test
+
+cs-check: ## Проверить PSR-12 стиль PHP-CS-Fixer
+	$(COMPOSE) exec -T app composer cs:check
+
+cs-fix: ## Исправить PSR-12 стиль PHP-CS-Fixer
+	$(COMPOSE) exec -T app composer cs:fix
+
+analyse: ## Запустить PHPStan level 6 с Larastan
+	$(COMPOSE) exec -T app composer analyse

@@ -6,7 +6,9 @@ use App\Modules\Catalog\Application\Queries\HotelQueryService;
 
 final readonly class GetHotelsQueryHandler
 {
-    public function __construct(private HotelQueryService $queryService) {}
+    public function __construct(private HotelQueryService $queryService)
+    {
+    }
 
     public function handle(GetHotelsQuery $query): HotelReadPage
     {
