@@ -3,17 +3,17 @@
 namespace App\Modules\Catalog\Infrastructure\Persistence\QueryBuilder;
 
 use App\Modules\Catalog\Application\Queries\GetHotels\GetHotelsQuery;
-use App\Modules\Catalog\Application\Queries\GetHotels\GetHotelsQueryService;
 use App\Modules\Catalog\Application\Queries\GetHotels\HotelReadModel;
 use App\Modules\Catalog\Application\Queries\GetHotels\HotelReadPage;
 use App\Modules\Catalog\Application\Queries\GetHotels\RoomTypeReadModel;
+use App\Modules\Catalog\Application\Queries\HotelQueryService;
 use Illuminate\Database\ConnectionInterface;
 
-final readonly class QueryBuilderGetHotelsQueryService implements GetHotelsQueryService
+final readonly class QueryBuilderHotelQueryService implements HotelQueryService
 {
     public function __construct(private ConnectionInterface $database) {}
 
-    public function execute(GetHotelsQuery $query): HotelReadPage
+    public function getHotels(GetHotelsQuery $query): HotelReadPage
     {
         $total = $this->database->table('hotels')
             ->where('city_id', $query->cityId)

@@ -2,14 +2,14 @@
 
 namespace App\Modules\Catalog;
 
-use App\Modules\Catalog\Application\Queries\GetHotels\GetHotelsQueryService;
-use App\Modules\Catalog\Infrastructure\Persistence\QueryBuilder\QueryBuilderGetHotelsQueryService;
+use App\Modules\Catalog\Application\Queries\HotelQueryService;
+use App\Modules\Catalog\Infrastructure\Persistence\QueryBuilder\QueryBuilderHotelQueryService;
 use Illuminate\Support\ServiceProvider;
 
 class CatalogServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(GetHotelsQueryService::class, QueryBuilderGetHotelsQueryService::class);
+        $this->app->bind(HotelQueryService::class, QueryBuilderHotelQueryService::class);
     }
 }
