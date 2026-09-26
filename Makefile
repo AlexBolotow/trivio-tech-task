@@ -45,8 +45,8 @@ migrate: ## Выполнить миграции Laravel
 down: ## Остановить окружение, сохранив данные MySQL
 	$(COMPOSE) down --remove-orphans
 
-reset: ## Удалить контейнеры и volumes, включая данные MySQL
-	@printf '%s\n' 'Warning: MySQL data will be permanently removed.'
+reset: ## Удалить контейнеры и integration MySQL volume; личная dev-база сохраняется
+	@printf '%s\n' 'Warning: integration MySQL data will be permanently removed; developer database volume is preserved.'
 	$(COMPOSE) down --volumes --remove-orphans
 
 ps: ## Показать состояние сервисов
@@ -64,5 +64,5 @@ artisan: ## Запустить Artisan, например: make artisan ARGS='abo
 composer: ## Запустить Composer, например: make composer ARGS='validate --strict'
 	$(COMPOSE) exec app composer $(ARGS)
 
-test: ## Запустить PHPUnit suite внутри app-контейнера
+test: ## Запустить PHPUnit на отдельной MySQL-схеме trivio_testing внутри app-контейнера
 	$(COMPOSE) exec -T app php artisan test

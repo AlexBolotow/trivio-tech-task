@@ -66,7 +66,9 @@ Redis, RabbitMQ и Elasticsearch намеренно будут добавлен�
 | `make artisan ARGS='about'` | Выполнить Artisan-команду |
 | `make composer ARGS='validate --strict'` | Выполнить Composer-команду |
 | `make migrate` | Выполнить миграции |
-| `make test` | Запустить PHPUnit suite |
+| `make test` | Запустить PHPUnit на отдельной MySQL-схеме `trivio_testing` |
+
+Тесты подключаются к текущему MySQL-сервису `mysql`, но используют собственную схему `trivio_testing`. Локальная база приложения (`mysql-dev`) и основная схема `trivio` в тестах не используются. Тестовую схему можно очищать и пересоздавать без потери локальных данных разработки.
 
 ## Xdebug
 

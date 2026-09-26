@@ -3,6 +3,7 @@
 .env
 .env.*
 !.env.example
+compose.override.yaml
 auth.json
 vendor/
 node_modules/
