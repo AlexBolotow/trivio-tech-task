@@ -9,7 +9,7 @@
 - [x] Создать и зарегистрировать `CatalogServiceProvider`, привязав Query Service port к Query Builder адаптеру.
 - [ ] Добавить application test на делегирование Query Handler в port.
 - [x] Зарегистрировать маршрут через `CatalogServiceProvider`.
-- [ ] Добавить HTTP feature tests для успешной выдачи, пустого результата, фильтрации, пагинации и validation errors.
+- [x] Добавить HTTP feature tests для успешной выдачи, пустого результата, фильтрации, пагинации и validation errors.
 - [x] Добавить MySQL integration tests для фильтрации каталога, сортировки, пагинации и пакетного чтения вложенных данных.
 - [ ] Добавить database integration tests для Eloquent-отношений и ограничений схемы.
 - [ ] Обновить README примерами запуска seeder и запроса каталога.
