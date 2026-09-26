@@ -10,9 +10,11 @@
 - [ ] Добавить application test на делегирование Query Handler в port.
 - [x] Зарегистрировать маршрут через `CatalogServiceProvider`.
 - [ ] Добавить HTTP feature tests для успешной выдачи, пустого результата, фильтрации, пагинации и validation errors.
-- [ ] Добавить database integration tests для отношений и ограничений схемы.
+- [x] Добавить MySQL integration tests для фильтрации каталога, сортировки, пагинации и пакетного чтения вложенных данных.
+- [ ] Добавить database integration tests для Eloquent-отношений и ограничений схемы.
 - [ ] Обновить README примерами запуска seeder и запроса каталога.
 - [ ] Выполнить миграции на чистой базе и проверить повторный запуск.
-- [ ] Запустить `make test` и `composer validate --strict`.
+- [x] Запустить `make test`.
+- [x] Запустить `composer validate --strict`.
 - [ ] Сверить реализацию с proposal, specification и design.
 - [ ] После успешной проверки обновить актуальную capability specification и архивировать change-пакет.
