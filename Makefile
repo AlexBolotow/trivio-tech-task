@@ -45,8 +45,8 @@ migrate: ## Выполнить миграции Laravel
 down: ## Остановить окружение, сохранив данные MySQL
 	$(COMPOSE) down --remove-orphans
 
-reset: ## Удалить контейнеры и integration MySQL volume; личная dev-база сохраняется
-	@printf '%s\n' 'Warning: integration MySQL data will be permanently removed; developer database volume is preserved.'
+reset: ## Удалить контейнеры и Compose-managed volumes; внешние volumes сохраняются
+	@printf '%s\n' 'Warning: Compose-managed MySQL data will be permanently removed; external volumes are preserved.'
 	$(COMPOSE) down --volumes --remove-orphans
 
 ps: ## Показать состояние сервисов

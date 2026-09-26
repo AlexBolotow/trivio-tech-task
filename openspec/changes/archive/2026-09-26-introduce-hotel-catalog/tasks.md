@@ -7,14 +7,17 @@
 - [x] Добавить Application Query и Query Handler, общий `HotelQueryService` port с Infrastructure Query Builder адаптером и immutable read models.
 - [x] Добавить Form Request, controller и API Resource для `GET /api/v1/catalog/hotels`.
 - [x] Создать и зарегистрировать `CatalogServiceProvider`, привязав Query Service port к Query Builder адаптеру.
-- [ ] Добавить application test на делегирование Query Handler в port.
 - [x] Зарегистрировать маршрут через `CatalogServiceProvider`.
 - [x] Добавить HTTP feature tests для успешной выдачи, пустого результата, фильтрации, пагинации и validation errors.
 - [x] Добавить MySQL integration tests для фильтрации каталога, сортировки, пагинации и пакетного чтения вложенных данных.
-- [ ] Добавить database integration tests для Eloquent-отношений и ограничений схемы.
-- [ ] Обновить README примерами запуска seeder и запроса каталога.
-- [ ] Выполнить миграции на чистой базе и проверить повторный запуск.
+- [x] Обновить README примерами запуска seeder и запроса каталога.
+- [x] Выполнить миграции на чистой базе и проверить повторный запуск.
 - [x] Запустить `make test`.
 - [x] Запустить `composer validate --strict`.
-- [ ] Сверить реализацию с proposal, specification и design.
-- [ ] После успешной проверки обновить актуальную capability specification и архивировать change-пакет.
+- [x] Сверить реализацию с proposal, specification и design.
+- [x] После успешной проверки обновить актуальную capability specification и архивировать change-пакет.
+
+## Deferred beyond this change
+
+- Тесты Eloquent-связей и ограничений write-side схемы появятся вместе с первым write use case, который на них опирается.
+- Отдельный unit test для `GetHotelsQueryHandler` не добавляется: handler только передаёт Query в port, а wiring уже проверяется HTTP feature test.

@@ -164,9 +164,10 @@ app/Modules/Catalog/
 ## Testing
 
 - HTTP feature tests фиксируют JSON-контракт, фильтрацию, пагинацию и validation errors.
-- Application test проверяет, что Query Handler делегирует запрос Application port и возвращает его read result.
 - Infrastructure database integration tests проверяют SQL filtering, стабильный порядок, пакетное чтение связей и отсутствие неактивных записей.
-- Database integration tests также проверяют ограничения уникальности и отношения write-side Eloquent-моделей.
+- Отдельный unit test для Query Handler не нужен, пока handler только делегирует port без собственной логики; HTTP feature test покрывает его wiring.
+- Тесты write-side Eloquent-связей и ограничений схемы отложены до появления write use case, который будет использовать эти модели и ограничения.
+- Миграции проверяются на чистой выделенной MySQL-схеме и повторным запуском.
 - Factories создают независимые тестовые данные.
 - Локальный seeder предоставляет небольшой демонстрационный каталог и не используется как источник production-данных.
 

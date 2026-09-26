@@ -1,6 +1,6 @@
 # Proposal: Introduce hotel catalog
 
-- Status: Proposed
+- Status: Accepted
 - Created: 2026-09-25
 
 ## Why
