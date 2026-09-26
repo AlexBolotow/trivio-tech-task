@@ -1,70 +1,70 @@
-# Supplier feed import specification
+# Спецификация импорта файлов поставщиков
 
-## Requirement: Import supplier catalog feeds
+## Требование: импортировать каталоги поставщиков
 
-The system SHALL accept supplier catalog feeds through a supplier-specific reader and represent each import as a tracked batch.
+Система ДОЛЖНА принимать каталог поставщика через reader, учитывающий формат этого поставщика, и представлять каждую загрузку как отслеживаемый batch.
 
-### Scenario: Start an import
+### Сценарий: запуск импорта
 
-GIVEN a provider and a feed source/version are configured
-WHEN an import is requested
-THEN the system records an import batch before processing records
-AND records enough metadata to identify and diagnose the source version
-AND does not make the batch active before successful completion.
+ДАНО, что для поставщика настроен источник и версия файла
+КОГДА запускается импорт
+ТОГДА система сначала создаёт запись о batch
+И записывает достаточно метаданных, чтобы определить версию файла и диагностировать обработку
+И не активирует batch до успешного завершения.
 
-## Requirement: Process large feeds incrementally
+## Требование: обрабатывать большие файлы постепенно
 
-The system SHALL process catalog feeds without loading the full file into application memory.
+Система ДОЛЖНА обрабатывать каталоги, не загружая весь файл в память приложения.
 
-### Scenario: Read an NDJSON feed
+### Сценарий: чтение NDJSON
 
-GIVEN a feed containing one hotel record per line
-WHEN the import reader processes the feed
-THEN each line is handled as an independent record
-AND work can be divided only at record boundaries.
+ДАНО, что файл содержит одну запись отеля на строку
+КОГДА reader обрабатывает файл
+ТОГДА каждая строка обрабатывается как отдельная запись
+И работу можно разделять только между целыми записями.
 
-### Scenario: Read a single-line XML feed
+### Сценарий: чтение однострочного XML
 
-GIVEN a feed containing many hotel records in one XML document on one physical line
-WHEN the import reader processes the feed
-THEN it uses a streaming parser
-AND it does not assume that line boundaries are record boundaries.
+ДАНО, что файл содержит много отелей в одном XML-документе на одной физической строке
+КОГДА reader обрабатывает файл
+ТОГДА он использует потоковый разбор
+И не считает границы строк границами записей.
 
-## Requirement: Retry chunks safely
+## Требование: безопасно повторять chunks
 
-The system SHALL tolerate at-least-once execution of import chunks.
+Система ДОЛЖНА выдерживать повторное выполнение import chunks.
 
-### Scenario: A worker lease expires after partial progress
+### Сценарий: lease воркера истёк после частичной обработки
 
-GIVEN a worker has partially processed a chunk and its lease expires
-WHEN another worker retries that chunk
-THEN repeated source records do not create duplicate supplier records
-AND the chunk eventually reaches a terminal result or an explicit retry limit.
+ДАНО, что воркер частично обработал chunk, а затем его lease истёк
+КОГДА другой воркер повторно обрабатывает этот chunk
+ТОГДА повторные исходные записи не создают дубликаты данных поставщика
+И chunk в итоге получает конечный результат либо достигает явно установленного лимита повторов.
 
-## Requirement: Keep incomplete imports out of active reads
+## Требование: не показывать незавершённую версию
 
-The system SHALL activate a feed version only after its required processing and validation have completed.
+Система ДОЛЖНА активировать версию файла только после завершения обязательной обработки и проверок.
 
-### Scenario: A chunk or batch fails
+### Сценарий: chunk или batch завершился ошибкой
 
-GIVEN an active supplier version already exists
-WHEN a new import is incomplete or fails validation thresholds
-THEN the active version remains unchanged
-AND the failed batch remains available for diagnosis.
+ДАНО, что у поставщика уже есть активная версия
+КОГДА новый импорт не завершён или не прошёл проверки
+ТОГДА активная версия остаётся прежней
+И завершившийся ошибкой batch остаётся доступен для диагностики.
 
-### Scenario: Import completes
+### Сценарий: импорт завершился успешно
 
-GIVEN all required chunks completed and batch-level checks pass
-WHEN the finalizer activates the batch
-THEN readers see the new version as one active snapshot
-AND they do not observe a mixture of the previous and new supplier versions.
+ДАНО, что все обязательные chunks обработаны и проверки batch пройдены
+КОГДА finalizer активирует batch
+ТОГДА читатели видят новую версию как единый активный снимок
+И не наблюдают смесь предыдущей и новой версий данных поставщика.
 
-## Requirement: Isolate provider-specific format rules
+## Требование: изолировать форматы поставщиков
 
-The system SHALL keep NDJSON/XML parsing and source-field translation at the supplier integration boundary.
+Система ДОЛЖНА держать правила чтения NDJSON/XML и преобразования исходных полей на границе интеграции с соответствующим поставщиком.
 
-### Scenario: A supplier changes its feed shape
+### Сценарий: изменился формат одного поставщика
 
-WHEN one supplier adds or changes source fields
-THEN the change is handled in that supplier's reader/translation layer
-AND unrelated provider readers and canonical Catalog contracts do not acquire provider-specific conditionals.
+КОГДА поставщик добавляет или меняет поля в своём файле
+ТОГДА изменение обрабатывается в reader или слое преобразования этого поставщика
+И в readers других поставщиков и канонический контракт Catalog не добавляются условия, специфичные для изменённого источника.

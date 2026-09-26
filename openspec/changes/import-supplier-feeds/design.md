@@ -1,75 +1,75 @@
-# Design: Import supplier hotel feeds
+# Проектирование: импорт каталогов поставщиков
 
-## Context from the source system-design conversation
+## Контекст из чата о system design
 
-- Supplier 1 supplies a potentially multi-million-record NDJSON catalog with hotel details, room types, amenities and photo URLs. It also has a separate live API for current offers; that API is not part of feed import.
-- Supplier 2 supplies a daily, single-line XML catalog with tens of thousands of hotels and room types with nightly prices. Its API only books; the file price is not proof of availability.
-- The user proposed parent import_tasks and child import_chunk_tasks, created on a schedule, with workers claiming chunks using MySQL SELECT ... FOR UPDATE SKIP LOCKED, heartbeats/leases, retry counters and retry after stale work.
-- The conversation favored treating chunk processing as at-least-once and making writes idempotent. RabbitMQ should not mirror the import-chunk queue state.
-- The source discussion considered both common supplier tables and source-specific staging. No final persistence choice is assumed here; it needs review against the current modular-monolith guidance.
+- Поставщик 1 передаёт потенциально многомиллионный каталог в формате NDJSON: отели, типы номеров, удобства и ссылки на фотографии. Отдельно у него есть API актуальных предложений; это API не входит в импорт файлов.
+- Поставщик 2 ежедневно публикует XML-каталог размером в десятки тысяч отелей. В документе есть отели, типы номеров и цена за ночь. Его API умеет только бронировать; цена из файла не подтверждает доступность.
+- Пользователь предложил хранить родительские задачи импорта и дочерние import_chunk_tasks, создавать задачи по расписанию, а воркерам забирать chunks через MySQL SELECT ... FOR UPDATE SKIP LOCKED. Для зависших задач обсуждались heartbeat, lease и счётчик повторов.
+- Обработка должна допускать at-least-once delivery и быть идемпотентной. RabbitMQ не должен дублировать состояние очереди chunks.
+- В чате рассматривались общие таблицы поставщиков и source-specific staging. Окончательный выбор хранения не зафиксирован; его нужно сверить с текущей архитектурой модульного монолита.
 
-## Proposed boundaries
+## Предлагаемые границы
 
 ~~~text
-SupplierIntegration format reader
-        ↓ source-specific records
-Import batch / chunk orchestration
-        ↓ validated source records
-supplier-side persistence / staging
-        ↓ later public contract
-Matching → canonical Catalog
+Reader формата в SupplierIntegration
+        ↓ записи в формате источника
+Управление импортом и chunks в Import
+        ↓ проверенные записи источника
+Хранение данных поставщика / staging
+        ↓ публичный контракт на следующем этапе
+Matching → канонический Catalog
 ~~~
 
-- Import owns the import run lifecycle, chunk scheduling/claiming, retries, quarantine counts and activation readiness.
-- Supplier-specific readers own the external feed shape and convert it into typed source records. Do not create one giant interface that also includes availability and booking capabilities.
-- Catalog remains the owner of canonical hotels and room types. Import does not reach into another module's private implementation; integration with Matching/Catalog needs an explicit public application contract when that slice is designed.
+- Import отвечает за жизненный цикл загрузки, постановку и захват chunks, повторы, количество записей в карантине и готовность к активации.
+- Supplier-specific readers знают формат файла и преобразуют его в типизированные записи источника. Не нужно создавать один большой интерфейс, который также включает поиск доступности и бронирование.
+- Catalog остаётся владельцем канонических отелей и типов номеров. Import не обращается к приватным классам другого модуля; для связи с Matching и Catalog позднее потребуется явный публичный контракт.
 
-## Proposed lifecycle
+## Предлагаемый цикл импорта
 
-1. Create an import batch for a provider and input version; record a checksum and source reference.
-2. Validate that the feed can be read. Reject an identical already-completed version or make its retry behavior explicit.
-3. Produce bounded chunks. NDJSON can be partitioned at record boundaries. XML must be read as a stream; because it is one physical line, line-offset chunking is invalid.
-4. Workers claim pending chunks in a short MySQL transaction with FOR UPDATE SKIP LOCKED, then record worker/lease information. Do not hold a database transaction while parsing a large chunk.
-5. Parse, validate and write idempotently. A uniqueness key must include the import version and supplier's external record identifier. Invalid records go to a bounded quarantine/error record with source position and a reason; the raw feed remains the diagnostic source.
-6. A heartbeat renews the lease. A stale lease becomes retryable; retry count and terminal failure are explicit. Reprocessing a partial chunk must converge to the same staged state.
-7. A finalizer activates a complete, validated import version atomically. A failed or incomplete import must not replace the currently active supplier snapshot.
-8. Matching and search-index updates consume the new version later through their module contracts; they are not implemented as hidden parser side effects.
+1. Создать import batch для поставщика и версии входного файла; сохранить контрольную сумму и ссылку на источник.
+2. Проверить, что файл можно прочитать. Для уже успешно обработанной контрольной суммы определить явное поведение: отклонить повторный импорт либо безопасно переиспользовать результат.
+3. Подготовить ограниченные по размеру chunks. NDJSON можно делить на границах записей. XML нужно читать потоком: одна физическая строка не является границей записи.
+4. Воркер захватывает ожидающий chunk в короткой MySQL-транзакции через FOR UPDATE SKIP LOCKED и записывает данные воркера и lease. Транзакцию нельзя держать открытой на время разбора большого файла.
+5. Разбирать, проверять и идемпотентно сохранять записи. Уникальный ключ должен учитывать версию импорта и внешний идентификатор записи у поставщика. Некорректную запись помещать в ограниченную запись карантина с позицией в источнике и причиной ошибки; исходный файл сохранять как диагностический источник.
+6. Heartbeat продлевает lease. Просроченный lease разрешает повторный захват; число повторов и окончательный отказ фиксируются явно. Частичное повторное выполнение chunk должно приводить к тому же состоянию staging.
+7. Finalizer активирует полную и проверенную версию импорта атомарно. Неудачный или незавершённый импорт не заменяет активный набор данных поставщика.
+8. Matching и обновление поискового индекса позже получают новую версию через контракты своих модулей; парсер не должен незаметно выполнять их работу.
 
-## Open decisions for review
+## Решения, требующие ревью
 
-### Staging representation
+### Представление staging-данных
 
-Options:
+Варианты:
 
-1. Common supplier_hotels / supplier_room_types tables with typed common fields and a source payload for diagnostics.
-2. Separate supplier-specific staging tables that preserve each source shape, followed by conversion into common supplier records.
-3. Keep raw feed files outside MySQL and write directly to common supplier records, adding staging tables only where retry/validation requires them.
+1. Общие таблицы supplier_hotels и supplier_room_types с типизированными общими полями и исходным payload для диагностики.
+2. Отдельные staging-таблицы для поставщиков, сохраняющие структуру каждого источника, с последующим преобразованием в общие записи поставщиков.
+3. Хранить исходные файлы вне MySQL и писать общие записи напрямую, добавляя staging только там, где он нужен для повторной обработки или проверок.
 
-The historical design discussion leaned toward source-aligned data at the integration edge and a common internal model after translation, but it did not establish this as a final project ADR. My recommendation for the first Laravel slice is raw file + common per-provider records/version metadata, with source-specific parsers and no permanent duplicate staging tables unless replay/validation proves they are needed.
+В историческом обсуждении склонялись к хранению source-aligned данных на границе интеграции с последующим преобразованием во внутреннюю модель, но это не оформлено как принятое ADR. Моя рекомендация для первого Laravel-этапа: исходный файл плюс общие записи поставщика и версия импорта; отдельные постоянные staging-таблицы добавлять только если их необходимость подтвердится требованиями повтора или проверок.
 
-### XML chunk production
+### Получение chunks из XML
 
-1. One streaming XML producer emits bounded batches into MySQL staging and creates chunk tasks from completed ranges.
-2. A streaming splitter materializes bounded XML fragments/chunk files, then chunk workers process them in parallel.
-3. Process this smaller Supplier 2 feed in one streaming task initially; add chunk fan-out only when throughput requires it.
+1. Один streaming XML-reader выдаёт ограниченные batch-записи в MySQL staging, после чего создаются задачи для обработанных диапазонов.
+2. Потоковый splitter формирует ограниченные XML-фрагменты или chunk-файлы, которые затем параллельно обрабатывают воркеры.
+3. Сначала читать файл поставщика 2 одним streaming-процессом; добавлять параллельное разбиение только при подтверждённой потребности в скорости.
 
-The smallest safe first version is option 3 for XML and independently chunked NDJSON. Both use the same parent-task lifecycle; a source reader may emit a different number of child chunks.
+Для первого этапа предлагаю вариант 3 для XML и независимое разбиение NDJSON. Оба формата используют общий жизненный цикл родительской задачи, но reader может создавать разное число дочерних chunks.
 
-### Full snapshot activation
+### Активация полной версии
 
-Use versioned supplier records and an explicit active import/version pointer rather than trying to update canonical records row-by-row while users read them. Confirm whether this pointer lives on the provider, on the batch, or is represented with an active version field before schema work.
+Использовать версии данных поставщика и явный указатель на активный импорт, а не обновлять канонические записи по одной во время чтения файла. До изменения схемы нужно решить, где хранить указатель: у поставщика, в import batch или отдельным активным признаком версии.
 
-## Transaction and failure boundaries
+## Транзакции и обработка ошибок
 
-- Claim/update a chunk under a short row-locking transaction.
-- Persist each bounded batch transactionally; never wrap the entire multi-million-record feed in one transaction.
-- Reprocessing is at-least-once; uniqueness constraints and deterministic upserts provide idempotency.
-- Chunk failure is retried only while its lease and retry policy permit it. Permanent record validation errors are quarantined; systemic file/format failures fail the batch.
-- Activation is a short atomic operation after all required chunks have terminal successful processing and batch-level checks pass.
+- Захват и обновление chunk выполняются в короткой транзакции с блокировкой строки.
+- Каждый ограниченный batch записывается транзакционно; весь файл на миллионы записей не оборачивается в одну транзакцию.
+- Повторное выполнение допускается; уникальные ограничения и детерминированные upsert обеспечивают идемпотентность.
+- Ошибки chunk повторяются согласно lease и политике повторов. Постоянные ошибки валидации записей отправляются в карантин; системная ошибка файла или формата завершает весь batch с ошибкой.
+- Активация — короткая атомарная операция после успешного завершения обязательных chunks и проверок уровня batch.
 
-## Alternatives considered
+## Рассмотренные альтернативы
 
-- RabbitMQ for every chunk: rejected for the first iteration because MySQL task rows already own progress, lease, retry and parent aggregation; a broker would duplicate queue state.
-- Load the whole feed into memory and parse with json_decode/DOM: rejected because the assignment's feeds are large and the XML is one line.
-- Write directly to active canonical Catalog rows while parsing: rejected because partial imports and retries could expose a mixed dataset.
-- One universal provider adapter with search, booking and import methods: rejected because feed capabilities differ and the first task concerns import only.
+- RabbitMQ для каждого chunk: не использовать на первом этапе, поскольку строки MySQL уже хранят прогресс, lease, повторы и состояние родительского импорта; брокер продублировал бы состояние очереди.
+- Загружать файл целиком и разбирать через json_decode или DOM: не использовать из-за размера потоков и однострочного XML.
+- Обновлять активный Catalog по мере чтения: не использовать, потому что сбои и повторы могут открыть читателям смешанный набор старых и новых данных.
+- Один универсальный адаптер поставщика для импорта, поиска и бронирования: не использовать, потому что возможности поставщиков различаются, а текущий этап касается только импорта.

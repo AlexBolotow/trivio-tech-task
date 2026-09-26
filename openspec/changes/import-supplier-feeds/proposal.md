@@ -1,30 +1,30 @@
-# Proposal: Import supplier hotel feeds
+# Предложение: импорт каталогов поставщиков
 
-## Why
+## Зачем
 
-The Catalog read endpoint now exposes canonical hotel data, but the project has no path for bringing supplier hotel and room data into the system. The Trivio assignment has two materially different inputs: a large line-delimited JSON feed and a daily single-line XML feed.
+HTTP-запрос каталога уже возвращает канонические данные об отелях, но в проекте пока нет процесса загрузки данных поставщиков. В задании Trivio описаны два заметно разных источника: большой файл NDJSON и ежедневный XML-файл, в котором весь документ находится в одной строке.
 
-The source system-design conversation established a MySQL-backed parent import task plus child chunk tasks claimed by workers with SELECT ... FOR UPDATE SKIP LOCKED. Chunks are at-least-once and therefore need leases, retry limits and idempotent writes. RabbitMQ should not duplicate the state of this import work queue.
+В чате с обсуждением system design пользователь предложил хранить родительские задачи импорта и дочерние задачи для chunks в MySQL. Воркеры должны забирать chunks через SELECT ... FOR UPDATE SKIP LOCKED. Повторная обработка возможна, поэтому нужны lease, ограничение повторов и идемпотентные записи. RabbitMQ не должен дублировать очередь и состояние обработки chunks.
 
-## Proposed scope
+## Предлагаемый объём
 
-- Define a supplier-feed import boundary and small, synthetic examples for both formats.
-- Track an import batch and its child work, including source identity, checksum/version, status, record counts and failures.
-- Parse feeds incrementally and validate each hotel/room record.
-- Keep provider identifiers and source data separate from canonical Catalog records so a later Matching step can link them.
-- Make chunk retries safe and avoid exposing an incomplete feed version as active.
-- Keep actual SFTP/API delivery, production scheduling, matching decisions and search indexing outside the first implementation slice.
+- Определить границу импорта файлов поставщиков и добавить небольшие синтетические примеры обоих форматов.
+- Отслеживать импорт и его дочернюю работу: поставщик, контрольную сумму или версию источника, статус, число записей и ошибки.
+- Читать файлы потоком и проверять записи отелей и типов номеров.
+- Хранить идентификаторы и исходные данные поставщика отдельно от канонического каталога, чтобы следующий этап Matching мог связывать их.
+- Сделать повторную обработку chunks безопасной и не публиковать неполную версию файла.
+- Оставить получение файлов по SFTP/API, production-планировщик, сопоставление и обновление поискового индекса за пределами первого этапа.
 
-## Out of scope
+## Что не входит
 
-- Availability queries, prices fetched from Supplier 1's API, and booking.
-- RabbitMQ as the queue for import chunks.
-- A matching algorithm or manual matching UI.
-- Production object storage, SFTP credentials, supplier API clients or deployment workers.
-- A performance claim for millions of records based only on the small fixtures.
+- Проверка доступности, получение актуальной цены через API поставщика 1 и бронирование.
+- Использование RabbitMQ как очереди для chunks импорта.
+- Алгоритм сопоставления отелей и интерфейс ручной проверки.
+- Production object storage, учётные данные SFTP, клиенты API поставщиков и production-воркеры.
+- Заявления о производительности на миллионах записей на основании маленьких примеров.
 
-## Proposed first vertical slice
+## Предлагаемый первый вертикальный сценарий
 
-Use local feed files as input in development/tests. Implement one complete import lifecycle against MySQL, then add format-specific readers for both sample feeds. Keep the XML reader streaming; a single-line XML file cannot be partitioned by line boundaries like NDJSON. The plan must choose whether to stream XML into bounded batches in one producer or create materialized chunk files before parallel workers claim them.
+В разработке и тестах использовать локальные файлы. Реализовать полный цикл одного импорта на MySQL, затем добавить readers для обоих форматов. XML нужно читать потоком: однострочный документ нельзя делить по границам строк, как NDJSON. Перед реализацией следует выбрать, будет ли XML-reader сам создавать ограниченные batch-записи или сначала формировать отдельные chunk-файлы для параллельных воркеров.
 
-Before coding, review the design choices listed in design.md, especially the staging representation and XML chunk production strategy.
+До начала реализации нужно обсудить варианты из design.md, в первую очередь способ хранения промежуточных данных и разбиение XML на chunks.
