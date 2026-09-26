@@ -32,6 +32,7 @@ up: env ## Поднять окружение, установить зависи�
 		printf 'Application health: http://%s/health\n' "$$url"
 
 composer-install: ## Установить Composer-зависимости внутри app-контейнера
+	$(COMPOSE) exec -T app mkdir -p bootstrap/cache storage/framework/cache/data
 	$(COMPOSE) exec -T app composer install --no-interaction --prefer-dist
 
 app-key: ## Сгенерировать APP_KEY, если он отсутствует
